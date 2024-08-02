@@ -1,0 +1,17 @@
+---
+- name: Gather Windows system facts
+  hosts: all
+  gather_facts: yes  # This enables the automatic gathering of facts at the start of the playbook run
+
+  tasks:
+    - name: Display all gathered facts
+      debug:
+        var: ansible_facts
+
+    - name: Display specific fact - Operating System
+      debug:
+        msg: "The operating system is {{ ansible_facts['os_family'] }} {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}."
+
+    - name: Display specific fact - Total RAM
+      debug:
+        msg: "Total RAM in GB: {{ (ansible_facts['memtotal_mb'] | float / 1024) | round(2) }}"

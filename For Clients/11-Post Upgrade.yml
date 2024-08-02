@@ -1,0 +1,38 @@
+---
+- name: Post Upgrade tasks
+  hosts: all
+  gather_facts: no
+
+  task:
+    - name: Wait for upgrade process to complete
+      wait_for:
+        port: 3389  # Assuming RDP is used for verification; adjust as needed
+        delay: 120  # Wait for 2 minutes
+        timeout: 3600  # Wait up to 1 hour
+      when: upgrade_process.rc == 0
+
+    - name: Verify Windows Server version (after upgrade)
+      win_shell: |
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $os.Caption
+      register: version_info_after_upgrade
+
+    - name: Show upgraded Windows Server version
+      debug:
+        msg: "Upgraded to Windows Server {{ version_info_after_upgrade.stdout }}"
+
+  post_tasks:
+    - name: Reboot the server if needed
+      win_reboot:
+        reboot_timeout: 600
+      when: upgrade_process.rc == 0
+
+    - name: Verify Windows Server version (again, after reboot)
+      win_shell: |
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $os.Caption
+      register: version_info_final
+
+    - name: Show final Windows Server version
+      debug:
+        msg: "Final Windows Server version: {{ version_info_final.stdout }}"

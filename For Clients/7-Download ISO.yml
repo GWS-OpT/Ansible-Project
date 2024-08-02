@@ -1,0 +1,24 @@
+---
+- name: Download ISO and verify
+  hosts: all
+  gather_facts: no
+
+  task:
+    - name: Check if the ISO file is already downloaded
+      win_stat:
+        path: C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso
+      register: iso_file_stat
+
+    - name: Download Windows Server upgrade media if not already present
+      win_shell: |
+        $source = '\\192.168.100.8\isos\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+        $destination = 'C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+        Copy-Item -Path $source -Destination $destination
+      args:
+        executable: powershell.exe
+      when: not iso_file_stat.stat.exists
+
+    - name: Verify downloaded file
+      win_stat:
+        path: C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso
+      register: file_stat
