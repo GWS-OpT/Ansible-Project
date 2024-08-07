@@ -1,3 +1,4 @@
+---
 - name: Ping Windows hosts
   hosts: all
   tasks:
