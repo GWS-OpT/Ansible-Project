@@ -3,7 +3,7 @@
   hosts: all
   gather_facts: no
 
-  task:
+  tasks:
     - name: Wait for upgrade process to complete
       wait_for:
         port: 3389  # Assuming RDP is used for verification; adjust as needed
