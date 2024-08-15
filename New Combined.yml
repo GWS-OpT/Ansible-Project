@@ -1,6 +1,6 @@
 - name: Complete Windows Server Upgrade Process
   hosts: all
-  gather_facts: no
+  gather_facts: yes # This should be at the play level, not within a task
   become: yes
   become_method: runas
   become_user: Administrator # Replace with the appropriate admin user
@@ -31,9 +31,6 @@
   - name: Display final WinRM status
     debug:
       msg: "Final WinRM service status is {{ winrm_final_status.stdout }}."
-
-  - name: Gather Windows system facts
-    gather_facts: yes
 
   - name: Display all gathered facts
     debug:
