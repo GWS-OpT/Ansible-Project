@@ -3,7 +3,7 @@
   hosts: all
   gather_facts: no
 
-  task:
+  tasks:
     - name: Start the upgrade process
       win_command: "{{ cleaned_drive_letter.stdout.strip() }}\\setup.exe /quiet /auto upgrade /dynamicupdate disable /migratedrivers all /showoobe none /pkey WMDGN-G9PQG-XVVXX-R3X43-63DFG /imageindex 4 /compat ignorewarning"
       register: upgrade_process
