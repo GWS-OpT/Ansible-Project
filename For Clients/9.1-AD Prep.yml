@@ -1,0 +1,45 @@
+- name: Upgrade Windows Server and Perform AD Preparation if Required
+  hosts: all
+  tasks:
+
+  - name: Check if the server is a Domain Controller
+    win_shell: "(Get-ADDomainController).Name"
+    register: is_ad_dc
+    ignore_errors: yes
+
+  - name: Debug the output to check if AD DC
+    debug:
+      var: is_ad_dc.stdout
+
+  - name: Skip AD Preparation if the server is not a Domain Controller
+    win_command: echo "Not an Active Directory Domain Controller, skipping AD Prep steps."
+    when: is_ad_dc.failed
+    changed_when: false
+
+  - name: Run ADPREP /forestprep
+    win_shell: |
+      cd F:\support\adprep
+      ./adprep.exe /forestprep
+    when: not is_ad_dc.failed
+    args:
+      chdir: "F:\\support\\adprep"
+    register: forestprep_output
+
+  - name: Display the output of forestprep
+    debug:
+      var: forestprep_output.stdout
+    when: not is_ad_dc.failed
+
+  - name: Run ADPREP /domainprep
+    win_shell: |
+      cd F:\support\adprep
+      ./adprep.exe /domainprep
+    when: not is_ad_dc.failed
+    args:
+      chdir: "F:\\support\\adprep"
+    register: domainprep_output
+
+  - name: Display the output of domainprep
+    debug:
+      var: domainprep_output.stdout
+    when: not is_ad_dc.failed
