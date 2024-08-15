@@ -19,11 +19,11 @@
 
   - name: Run ADPREP /forestprep
     win_shell: |
-      cd F:\support\adprep
+      cd {{ cleaned_drive_letter.stdout.strip() }}\support\adprep
       ./adprep.exe /forestprep
     when: ntds_service.exists is defined and ntds_service.exists == true
     args:
-      chdir: "F:\\support\\adprep"
+      chdir: "{{ cleaned_drive_letter.stdout.strip() }}\\support\\adprep"
     register: forestprep_output
 
   - name: Display the output of forestprep
@@ -33,15 +33,14 @@
 
   - name: Run ADPREP /domainprep
     win_shell: |
-      cd F:\support\adprep
+      cd {{ cleaned_drive_letter.stdout.strip() }}\support\adprep
       ./adprep.exe /domainprep
     when: ntds_service.exists is defined and ntds_service.exists == true
     args:
-      chdir: "F:\\support\\adprep"
+      chdir: "{{ cleaned_drive_letter.stdout.strip() }}\\support\\adprep"
     register: domainprep_output
 
   - name: Display the output of domainprep
     debug:
       var: domainprep_output.stdout
     when: ntds_service.exists is defined and ntds_service.exists == true
-
