@@ -1,6 +1,8 @@
 - name: Mount ISO and Clean
   hosts: all
   gather_facts: no
+  become: yes
+  become_method: runas
 
   tasks:
   - name: Mount the ISO
