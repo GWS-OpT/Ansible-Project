@@ -174,7 +174,7 @@
       var: ntds_service
 
   - name: Skip AD Preparation if the NTDS service is not found (not a Domain Controller)
-    win_command: echo "Not an Active Directory Domain Controller, skipping AD Prep steps."
+    win_shell: Write-Output "Not an Active Directory Domain Controller, skipping AD Prep steps."
     when: ntds_service.exists is not defined or ntds_service.exists == false
     changed_when: false
 
