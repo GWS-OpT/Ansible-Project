@@ -1,6 +1,5 @@
 - name: Complete Windows Server Upgrade Process
   hosts: all
-  gather_facts: yes # This should be at the play level, not within a task
   become: yes
   become_method: runas
   become_user: Administrator # Replace with the appropriate admin user
