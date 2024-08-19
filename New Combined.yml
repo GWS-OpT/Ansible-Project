@@ -132,6 +132,9 @@
     debug:
       msg: "{{ volume_list.stdout }}"
 
+  - name: Register iso drive
+    register: iso_drive
+
   - name: Clean up ISO drive letter
     win_shell: |
       $driveLetter = "{{ iso_drive.stdout.strip() }}:"
