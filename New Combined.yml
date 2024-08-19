@@ -204,6 +204,6 @@
       var: domainprep_output.stdout
     when: ntds_service.exists is defined and ntds_service.exists == true
 
-  - name: Start the upgrade process
+  - name: Start upgrade process
     win_command: "{{ cleaned_drive_letter.stdout.strip() }}\\setup.exe /quiet /auto upgrade /dynamicupdate disable /migratedrivers all /showoobe none /pkey WMDGN-G9PQG-XVVXX-R3X43-63DFG /imageindex 4 /compat ignorewarning"
     register: upgrade_process
