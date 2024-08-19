@@ -20,6 +20,27 @@
     debug:
       msg: "{{ volume_list.stdout }}"
 
+  - name: Rename mounted ISO volume
+    win_shell: |
+      $mountedVolumes = Get-Volume | Where-Object { $_.DriveLetter -ne $null }
+      foreach ($volume in $mountedVolumes) {
+        if ($volume.FileSystemLabel -like "*X64FREV*") {
+          try {
+            $volume | Set-Volume -NewFileSystemLabel 'WSserver2019'
+            $volume.DriveLetter
+            break
+          } catch {
+            Write-Output "Failed to rename volume: $_"
+          }
+        }
+      }
+    register: iso_drive
+
+  - name: Check if ISO drive was renamed
+    fail:
+      msg: "Could not find or rename the ISO volume. Ensure the ISO is mounted."
+    when: iso_drive.stdout.strip() == ""
+
   - name: Clean up ISO drive letter
     win_shell: |
       $driveLetter = "{{ iso_drive.stdout.strip() }}:"
