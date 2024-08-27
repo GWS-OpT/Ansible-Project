@@ -1,0 +1,53 @@
+- name: Post Windows Server Upgrade Verification
+  hosts: all
+  become: yes
+  become_method: runas
+  become_user: Administrator # Replace with the appropriate admin user
+
+  tasks:
+
+  - name: Ping the Windows hosts
+    win_ping:
+
+  - name: Verify Windows Server version
+    win_shell: |
+      $os = Get-CimInstance -ClassName Win32_OperatingSystem
+      $os.Caption
+    register: version_info
+
+  - name: Show current Windows Server version
+    debug:
+      msg: "Current Windows Server version: {{ version_info.stdout }}"
+
+  - name: Verify Windows Server build number
+    win_shell: |
+      $os = Get-CimInstance -ClassName Win32_OperatingSystem
+      $os.BuildNumber
+    register: build_info
+
+  - name: Show current Windows Server build number
+    debug:
+      msg: "Current Windows Server build number: {{ build_info.stdout }}"
+
+  - name: Gather Windows Server system information
+    win_shell: |
+      $systemInfo = Get-WmiObject -Class Win32_ComputerSystem
+      $systemInfo | Select-Object Name, Manufacturer, Model, TotalPhysicalMemory
+    register: system_info
+
+  - name: Display Windows Server system information
+    debug:
+      msg:
+      - "Server Name: {{ system_info.stdout | regex_search('Name\\s+\\:\\s+(.*)') }}"
+      - "Manufacturer: {{ system_info.stdout | regex_search('Manufacturer\\s+\\:\\s+(.*)') }}"
+      - "Model: {{ system_info.stdout | regex_search('Model\\s+\\:\\s+(.*)') }}"
+      - "Total Physical Memory (GB): {{ (system_info.stdout | regex_search('TotalPhysicalMemory\\s+\\:\\s+(.*)') | int / (1024*1024*1024)) | round(2) }}"
+
+  - name: Gather network information
+    win_shell: |
+      Get-NetIPConfiguration | Select-Object InterfaceAlias, IPv4Address, IPv6Address, DNSServer, InterfaceDescription
+    register: network_info
+
+  - name: Display network information
+    debug:
+      msg: "Network Configuration: {{ network_info.stdout }}"
