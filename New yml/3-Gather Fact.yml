@@ -1,0 +1,3 @@
+- name: Display all gathered facts
+  debug:
+    var: ansible_facts

@@ -1,0 +1,22 @@
+- name: Ensure WinRM is enabled on Windows hosts
+  win_shell: Get-Service -Name WinRM | Select-Object -ExpandProperty Status
+  register: winrm_status
+
+- name: Display WinRM status
+  debug:
+    msg: "WinRM service status is {{ winrm_status.stdout }}."
+
+- name: Enable WinRM if it is not running
+  win_shell: |
+    Set-Service -Name WinRM -StartupType Automatic
+    Start-Service -Name WinRM
+  when: winrm_status.stdout != "Running"
+
+- name: Verify WinRM is enabled and running
+  win_shell: Get-Service -Name WinRM | Select-Object -ExpandProperty Status
+  register: winrm_final_status
+  changed_when: False
+
+- name: Display final WinRM status
+  debug:
+    msg: "Final WinRM service status is {{ winrm_final_status.stdout }}."
