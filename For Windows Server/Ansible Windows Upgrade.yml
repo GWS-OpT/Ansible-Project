@@ -2,7 +2,7 @@
   hosts: all
   become: yes
   become_method: runas
-  become_user: Administrator # Replace with the appropriate admin user
+  become_user: Administrator
 
   tasks:
   - name: Ping the Windows hosts
