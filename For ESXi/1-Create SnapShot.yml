@@ -1,60 +1,59 @@
----
 - name: Create snapshots for specified VMs
   hosts: all
   gather_facts: no
   vars:
-    snapshot_name: "1-SnapShot"
+    snapshot_name: "Ansible-Snapshot-1"
 
   tasks:
-    - name: Include VM names from separate file
-      include_vars:
-        file: vm_names.yml
+  - name: Include VM names from separate file
+    include_vars:
+      file: vm_names.yml
 
-    - name: Retrieve the list of all VMs
-      ansible.builtin.shell: "vim-cmd vmsvc/getallvms"
-      register: vm_list
+  - name: Retrieve the list of all VMs
+    ansible.builtin.shell: "vim-cmd vmsvc/getallvms"
+    register: vm_list
 
-    - name: Debug VM list
-      debug:
-        var: vm_list.stdout_lines
+  - name: Debug VM list
+    debug:
+      var: vm_list.stdout_lines
 
-    - name: Parse VM list and find VM IDs
-      set_fact:
-        vm_ids: >-
-          {{
-            vm_list.stdout_lines[1:] | map('split', '    ') | selectattr('1', 'in', vm_names) | map('first') | list
-          }}
+  - name: Parse VM list and find VM IDs
+    set_fact:
+      vm_ids: >-
+        {{
+          vm_list.stdout_lines[1:] | map('split', '    ') | selectattr('1', 'in', vm_names) | map('first') | list
+        }}
 
-    - name: Debug VM IDs
-      debug:
-        var: vm_ids
+  - name: Debug VM IDs
+    debug:
+      var: vm_ids
 
-    - name: Ensure VM IDs were found
-      fail:
-        msg: "One or more VMs '{{ vm_names }}' not found."
-      when: vm_ids | length != vm_names | length
+  - name: Ensure VM IDs were found
+    fail:
+      msg: "One or more VMs '{{ vm_names }}' not found."
+    when: vm_ids | length != vm_names | length
 
-    - name: Check for existing snapshots
-      ansible.builtin.shell: "vim-cmd vmsvc/snapshot.get {{ item }}"
-      register: snapshot_check
-      loop: "{{ vm_ids }}"
+  - name: Check for existing snapshots
+    ansible.builtin.shell: "vim-cmd vmsvc/snapshot.get {{ item }}"
+    register: snapshot_check
+    loop: "{{ vm_ids }}"
 
-    - name: Parse existing snapshots
-      set_fact:
-        existing_snapshots: "{{ existing_snapshots | default({}) | combine({item.item: (item.stdout | regex_findall('Snapshot Name\\s+:\\s+(\\S+)', multiline=True)) }) }}"
-      loop: "{{ snapshot_check.results }}"
-      loop_control:
-        label: "{{ item.item }}"
+  - name: Parse existing snapshots
+    set_fact:
+      existing_snapshots: "{{ existing_snapshots | default({}) | combine({item.item: (item.stdout | regex_findall('Snapshot Name\\s+:\\s+(\\S+)', multiline=True)) }) }}"
+    loop: "{{ snapshot_check.results }}"
+    loop_control:
+      label: "{{ item.item }}"
 
-    - name: Debug existing snapshots
-      debug:
-        var: existing_snapshots
+  - name: Debug existing snapshots
+    debug:
+      var: existing_snapshots
 
-    - name: Create snapshots for VMs if not already present
-      ansible.builtin.shell: "vim-cmd vmsvc/snapshot.create {{ item }} '{{ snapshot_name }}' 'Created by Ansible'"
-      loop: "{{ vm_ids }}"
-      when: snapshot_name not in existing_snapshots[item]
+  - name: Create snapshots for VMs if not already present
+    ansible.builtin.shell: "vim-cmd vmsvc/snapshot.create {{ item }} '{{ snapshot_name }}' 'Created by Ansible'"
+    loop: "{{ vm_ids }}"
+    when: snapshot_name not in existing_snapshots[item]
 
-    - name: Display snapshot creation results
-      debug:
-        msg: "Snapshot creation results: {{ snapshot_check.results }}"
+  - name: Display snapshot creation results
+    debug:
+      msg: "Snapshot creation results: {{ snapshot_check.results }}"
