@@ -23,7 +23,7 @@
 
   - name: Parse VM list and find VM IDs
     set_fact:
-      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('length', 'ge', 2)  # Ensure only lines with 2+ elements are processed\n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
+      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('length', 'ge', 2)\n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
   - name: Debug VM IDs
     debug:
       var: vm_ids
