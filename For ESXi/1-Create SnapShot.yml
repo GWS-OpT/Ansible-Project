@@ -7,7 +7,7 @@
   tasks:
   - name: Include VM names from separate file
     include_vars:
-      file: vm_names.yml
+      file: vm_names.yml ##### CHANGE FILE #####
 
   - name: Retrieve the list of all VMs
     ansible.builtin.shell: "vim-cmd vmsvc/getallvms"
