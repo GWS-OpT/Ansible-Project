@@ -1,4 +1,4 @@
-- name: Upgradeonly,yml
+- name: Upgradeonly.yml
   hosts: all
   tasks:
   - name: Check if the ISO file is already downloaded
