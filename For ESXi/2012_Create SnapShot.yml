@@ -13,13 +13,20 @@
     ansible.builtin.shell: "vim-cmd vmsvc/getallvms"
     register: vm_list
 
-  - name: Debug VM list
+  - name: Debug the raw VM list output
     debug:
       var: vm_list.stdout_lines
 
+  - name: Ensure VM list has content
+    fail:
+      msg: "The VM list is empty or not in the expected format."
+    when: vm_list.stdout_lines is not defined or vm_list.stdout_lines | length == 0
+
   - name: Parse VM list and find VM IDs
     set_fact:
-      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
+      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}"
+    when: vm_list.stdout_lines | length > 1 # Only proceed if there are multiple lines
+
   - name: Debug VM IDs
     debug:
       var: vm_ids
