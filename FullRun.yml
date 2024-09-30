@@ -111,6 +111,47 @@
     debug:
       msg: "Current Windows Server version: {{ version_info.stdout }}"
 
+  - name: Check if the NTDS service is present (indicating a Domain Controller)
+    win_service:
+      name: NTDS
+    register: ntds_service
+    ignore_errors: yes
+
+  - name: Debug the output to check if NTDS service is found
+    debug:
+      var: ntds_service
+
+  - name: Skip AD Preparation if the NTDS service is not found (not a Domain Controller)
+    win_shell: Write-Output "Not an Active Directory Domain Controller, skipping AD Prep steps."
+    when: ntds_service.exists is not defined or ntds_service.exists == false
+    changed_when: false
+
+  - name: Run ADPREP /forestprep
+    win_shell: |
+      echo C | {{ cleaned_drive_letter.stdout.strip() }}\support\adprep\adprep.exe /forestprep
+    when: ntds_service.exists is defined and ntds_service.exists == true
+    args:
+      chdir: "{{ cleaned_drive_letter.stdout.strip() }}\\support\\adprep"
+    register: forestprep_output
+
+  - name: Display the output of forestprep
+    debug:
+      var: forestprep_output.stdout
+    when: ntds_service.exists is defined and ntds_service.exists == true
+
+  - name: Run ADPREP /domainprep
+    win_shell: |
+      echo C | {{ cleaned_drive_letter.stdout.strip() }}\support\adprep\adprep.exe /domainprep
+    when: ntds_service.exists is defined and ntds_service.exists == true
+    args:
+      chdir: "{{ cleaned_drive_letter.stdout.strip() }}\\support\\adprep"
+    register: domainprep_output
+
+  - name: Display the output of domainprep
+    debug:
+      var: domainprep_output.stdout
+    when: ntds_service.exists is defined and ntds_service.exists == true
+
   - name: Mount the ISO
     win_shell: |
       $isoPath = 'C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
