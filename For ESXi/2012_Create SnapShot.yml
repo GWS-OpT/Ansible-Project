@@ -9,20 +9,47 @@
     include_vars:
       file: 2012_vm_names.yml # Change the file name as needed
 
-  - name: Check if snapshot with given name already exists for each VM
-    community.vmware.vmware_guest_snapshot_info:
-      validate_certs: no
-      vm_id: "{{ item }}"
-    register: snapshot_info
-    with_items: "{{ vm_names }}"
+  - name: Retrieve the list of all VMs
+    ansible.builtin.shell: "vim-cmd vmsvc/getallvms"
+    register: vm_list
 
-  - name: Create snapshot for each VM if it doesn't already exist
-    community.vmware.vmware_guest_snapshot:
-      validate_certs: no
-      vm_id: "{{ item }}"
-      name: "{{ snapshot_name }}"
-      description: "Snapshot created by Ansible"
-      memory: no
-      quiesce: no
-    when: "'{{ snapshot_name }}' not in snapshot_info.snapshots | map(attribute='name') | list"
-    with_items: "{{ vm_names }}"
+  - name: Debug VM list
+    debug:
+      var: vm_list.stdout_lines
+
+  - name: Parse VM list and find VM IDs
+    set_fact:
+      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
+  - name: Debug VM IDs
+    debug:
+      var: vm_ids
+
+  - name: Ensure VM IDs were found
+    fail:
+      msg: "One or more VMs '{{ vm_names }}' not found."
+    when: vm_ids | length != vm_names | length
+
+  - name: Check for existing snapshots
+    ansible.builtin.shell: "vim-cmd vmsvc/snapshot.get {{ item }}"
+    register: snapshot_check
+    loop: "{{ vm_ids }}"
+
+  - name: Parse existing snapshots
+    set_fact:
+      existing_snapshots: "{{ existing_snapshots | default({}) | combine({item.item: (item.stdout | regex_findall('Snapshot Name\\s+:\\s+(\\S+)', multiline=True)) }) }}"
+    loop: "{{ snapshot_check.results }}"
+    loop_control:
+      label: "{{ item.item }}"
+
+  - name: Debug existing snapshots
+    debug:
+      var: existing_snapshots
+
+  - name: Create snapshots for VMs if not already present
+    ansible.builtin.shell: "vim-cmd vmsvc/snapshot.create {{ item }} '{{ snapshot_name }}' 'Created by Ansible'"
+    loop: "{{ vm_ids }}"
+    when: snapshot_name not in existing_snapshots[item]
+
+  - name: Display snapshot creation results
+    debug:
+      msg: "Snapshot creation results: {{ snapshot_check.results }}"
