@@ -24,9 +24,7 @@
 
   - name: Parse VM list and find VM IDs
     set_fact:
-      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}"
-    when: vm_list.stdout_lines | length > 1 # Only proceed if there are multiple lines
-
+      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('regex_replace', '\\s+', ' ')  \n  | map('split', ' ') \n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
   - name: Debug VM IDs
     debug:
       var: vm_ids
