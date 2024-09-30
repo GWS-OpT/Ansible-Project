@@ -17,13 +17,13 @@
     debug:
       var: vm_list.stdout_lines
 
+  - name: Debug split VM list for verification
+    debug:
+      msg: "{{ vm_list.stdout_lines[1:] | map('split', '    ') }}"
+
   - name: Parse VM list and find VM IDs
     set_fact:
-      vm_ids: >-
-        {{
-          vm_list.stdout_lines[1:] | map('split', '    ') | selectattr('1', 'in', vm_names) | map('first') | list
-        }}
-
+      vm_ids: "{{\n  vm_list.stdout_lines[1:] \n  | map('split', '    ') \n  | selectattr('length', 'ge', 2)  # Ensure each line has at least 2 elements\n  | selectattr('1', 'in', vm_names) \n  | map('first') \n  | list\n}}\n  #magic___^_^___line"
   - name: Debug VM IDs
     debug:
       var: vm_ids
