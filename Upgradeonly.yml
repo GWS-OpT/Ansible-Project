@@ -1,0 +1,83 @@
+- name: Upgradeonly,yml
+  hosts: all
+  tasks:
+  - name: Check if the ISO file is already downloaded
+    win_stat:
+      path: C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso
+    register: iso_file_stat
+
+  - name: Download Windows Server upgrade media if not already present
+    win_shell: |
+      $source = '\\192.168.100.8\isos\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+      $destination = 'C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+      Copy-Item -Path $source -Destination $destination
+    args:
+      executable: powershell.exe
+    when: not iso_file_stat.stat.exists
+
+  - name: Verify downloaded file
+    win_stat:
+      path: C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso
+    register: file_stat
+
+  - name: Verify Windows Server version
+    win_shell: |
+      $os = Get-CimInstance -ClassName Win32_OperatingSystem
+      $os.Caption
+    register: version_info
+
+  - name: Show current Windows Server version
+    debug:
+      msg: "Current Windows Server version: {{ version_info.stdout }}"
+
+  - name: Mount the ISO
+    win_shell: |
+      $isoPath = 'C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+      $mountResult = Mount-DiskImage -ImagePath $isoPath -PassThru
+      $volume = $mountResult | Get-Volume
+      $volume | Select-Object DriveLetter, FileSystemLabel
+    register: mount_result
+
+  - name: List all volumes and labels
+    win_shell: |
+      Get-Volume | Select-Object DriveLetter, FileSystemLabel
+    register: volume_list
+
+  - name: Show volume list
+    debug:
+      msg: "{{ volume_list.stdout }}"
+
+  - name: Rename mounted ISO volume
+    win_shell: |
+      $mountedVolumes = Get-Volume | Where-Object { $_.DriveLetter -ne $null }
+      foreach ($volume in $mountedVolumes) {
+        if ($volume.FileSystemLabel -like "*X64FREV*") {
+          try {
+            $volume | Set-Volume -NewFileSystemLabel 'WSserver2019'
+            $volume.DriveLetter
+            break
+          } catch {
+            Write-Output "Failed to rename volume: $_"
+          }
+        }
+      }
+    register: iso_drive
+
+  - name: Check if ISO drive was renamed
+    fail:
+      msg: "Could not find or rename the ISO volume. Ensure the ISO is mounted."
+    when: iso_drive.stdout.strip() == ""
+
+  - name: Clean up ISO drive letter
+    win_shell: |
+      $driveLetter = "{{ iso_drive.stdout.strip() }}:"
+      $driveLetter
+    register: cleaned_drive_letter
+
+  - name: Show ISO drive letter
+    debug:
+      msg: "ISO Drive Letter: {{ cleaned_drive_letter.stdout.strip() }}"
+
+  - name: Start the upgrade process
+    win_command: "{{ cleaned_drive_letter.stdout.strip() }}\\setup.exe /quiet /auto upgrade /dynamicupdate disable /migratedrivers all /showoobe none /pkey WMDGN-G9PQG-XVVXX-R3X43-63DFG /imageindex 4 /compat ignorewarning"
+    register: upgrade_process
