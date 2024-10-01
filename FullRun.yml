@@ -89,7 +89,7 @@
 
   - name: Download Windows Server upgrade media if not already present
     win_shell: |
-      $source = '\\192.168.100.24\share\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
+      $source = '\\192.168.100.8\isos\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
       $destination = 'C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso'
       Copy-Item -Path $source -Destination $destination
     args:
