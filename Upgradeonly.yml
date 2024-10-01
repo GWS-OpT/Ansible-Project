@@ -43,6 +43,12 @@
       var: domainprep_output.stdout
     when: ntds_service.exists is defined and ntds_service.exists == true
 
+  - name: Ensure directory exists for download
+    win_file:
+      path: C:\temp
+      state: directory
+      force: yes
+
   - name: Check if the ISO file is already downloaded
     win_stat:
       path: C:\temp\en_windows_server_2019_updated_nov_2020_x64_dvd_8600b05f.iso
