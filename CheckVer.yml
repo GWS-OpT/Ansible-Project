@@ -1,0 +1,13 @@
+- name: CheckVersion.yml
+  hosts: all
+  tasks:
+
+  - name: Verify Windows Server version
+    win_shell: |
+      $os = Get-CimInstance -ClassName Win32_OperatingSystem
+      $os.Caption
+    register: version_info
+
+  - name: Show current Windows Server version
+    debug:
+      msg: "Current Windows Server version: {{ version_info.stdout }}"
